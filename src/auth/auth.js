@@ -1,0 +1,31 @@
+import { supabase } from "../lib/supabaseClient.js";
+
+export async function signUp(email, password) {
+  return supabase.auth.signUp({ email, password });
+}
+
+export async function signIn(email, password) {
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signOut() {
+  return supabase.auth.signOut();
+}
+
+export async function getSession() {
+  const { data } = await supabase.auth.getSession();
+  return data.session;
+}
+
+/**
+ * S'abonne aux changements de session (connexion, déconnexion, refresh
+ * de token en arrière-plan). Supabase persiste déjà la session dans le
+ * navigateur, donc un refresh de page ou une réouverture plus tard
+ * retrouve automatiquement l'utilisateur connecté.
+ */
+export function onAuthChange(callback) {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session);
+  });
+  return () => data.subscription.unsubscribe();
+}
