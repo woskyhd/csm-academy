@@ -5,6 +5,7 @@ import { getLevelProgress } from "./xp/constants.js";
 import { mountTabBar } from "./nav/tabBar.js";
 import { mountDashboard } from "./dashboard/dashboard.js";
 import { mountClientsView } from "./views/clientsView.js";
+import { mountClientDetailView } from "./views/clientDetailView.js";
 import { mountTasksView } from "./views/tasksView.js";
 import { mountLearnView } from "./views/learnView.js";
 
@@ -13,6 +14,7 @@ const app = document.getElementById("app");
 let currentXp = 0;
 let currentUserId = null;
 let activeTab = "home";
+let selectedClientId = null;
 
 async function boot() {
   const session = await getSession();
@@ -69,6 +71,7 @@ function renderTabBar() {
     activeTab,
     onTabChange: (tab) => {
       activeTab = tab;
+      if (tab !== "clients") selectedClientId = null; // repart sur la liste si on revient plus tard
       renderTabBar(); // remet à jour l'état visuel actif
       renderActiveView();
     },
@@ -80,9 +83,36 @@ function renderActiveView() {
   const { level } = getLevelProgress(currentXp);
 
   if (activeTab === "home") {
-    mountDashboard(viewRoot, {});
+    mountDashboard(viewRoot, {
+      onOpenClient: (id) => {
+        selectedClientId = id;
+        activeTab = "clients";
+        renderTabBar();
+        renderActiveView();
+      },
+    });
   } else if (activeTab === "clients") {
-    mountClientsView(viewRoot);
+    if (selectedClientId) {
+      mountClientDetailView(viewRoot, {
+        clientId: selectedClientId,
+        userId: currentUserId,
+        onBack: () => {
+          selectedClientId = null;
+          renderActiveView();
+        },
+        onXpChange: (totalXp) => {
+          currentXp = totalXp;
+          renderHeader();
+        },
+      });
+    } else {
+      mountClientsView(viewRoot, {
+        onOpenClient: (id) => {
+          selectedClientId = id;
+          renderActiveView();
+        },
+      });
+    }
   } else if (activeTab === "tasks") {
     mountTasksView(viewRoot, { level });
   } else if (activeTab === "learn") {
