@@ -140,7 +140,14 @@ function renderActiveView() {
       });
     }
   } else if (activeTab === "tasks") {
-    mountTasksView(viewRoot, { level });
+    mountTasksView(viewRoot, {
+      level,
+      userId: currentUserId,
+      onXpChange: (totalXp) => {
+        currentXp = totalXp;
+        renderHeader();
+      },
+    });
   } else if (activeTab === "learn") {
     if (selectedLessonId) {
       mountLessonView(viewRoot, {

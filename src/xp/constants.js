@@ -10,6 +10,7 @@ export const XP_VALUES = {
   simulation: 150,
   expertChallenge: 300,
   clientNote: 20,
+  taskComplete: 15,
 };
 
 // Palier XP nécessaire pour ATTEINDRE ce niveau (pas juste le franchir),
