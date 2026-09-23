@@ -9,6 +9,7 @@ import { mountClientDetailView } from "./views/clientDetailView.js";
 import { mountMissionView } from "./views/missionView.js";
 import { mountTasksView } from "./views/tasksView.js";
 import { mountLearnView } from "./views/learnView.js";
+import { mountLessonView } from "./views/lessonView.js";
 
 const app = document.getElementById("app");
 
@@ -17,6 +18,7 @@ let currentUserId = null;
 let activeTab = "home";
 let selectedClientId = null;
 let activeMissionId = null;
+let selectedLessonId = null;
 
 async function boot() {
   const session = await getSession();
@@ -75,6 +77,7 @@ function renderTabBar() {
       activeTab = tab;
       if (tab !== "clients") selectedClientId = null; // repart sur la liste si on revient plus tard
       if (tab !== "home") activeMissionId = null; // repart sur le dashboard si on revient plus tard
+      if (tab !== "learn") selectedLessonId = null; // repart sur la liste des leçons si on revient plus tard
       renderTabBar(); // remet à jour l'état visuel actif
       renderActiveView();
     },
@@ -139,13 +142,32 @@ function renderActiveView() {
   } else if (activeTab === "tasks") {
     mountTasksView(viewRoot, { level });
   } else if (activeTab === "learn") {
-    mountLearnView(viewRoot, {
-      userId: currentUserId,
-      onXpChange: (totalXp) => {
-        currentXp = totalXp;
-        renderHeader(); // la barre XP en haut se met à jour immédiatement
-      },
-    });
+    if (selectedLessonId) {
+      mountLessonView(viewRoot, {
+        lessonId: selectedLessonId,
+        userId: currentUserId,
+        onBack: () => {
+          selectedLessonId = null;
+          renderActiveView();
+        },
+        onXpChange: (totalXp) => {
+          currentXp = totalXp;
+          renderHeader();
+        },
+      });
+    } else {
+      mountLearnView(viewRoot, {
+        userId: currentUserId,
+        onXpChange: (totalXp) => {
+          currentXp = totalXp;
+          renderHeader(); // la barre XP en haut se met à jour immédiatement
+        },
+        onOpenLesson: (id) => {
+          selectedLessonId = id;
+          renderActiveView();
+        },
+      });
+    }
   }
 }
 
