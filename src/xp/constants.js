@@ -11,13 +11,13 @@ export const XP_VALUES = {
   expertChallenge: 300,
 };
 
-// Palier XP nécessaire pour ATTEINDRE ce niveau (pas juste le franchir).
+// Palier XP nécessaire pour ATTEINDRE ce niveau (pas juste le franchir),
+// et le titre affiché à ce niveau.
 export const LEVEL_THRESHOLDS = [
-  { level: 1, xp: 0 },
-  { level: 2, xp: 500 },
-  { level: 3, xp: 1200 },
-  { level: 4, xp: 2000 },
-  { level: 5, xp: 3000 },
+  { level: 1, xp: 0, title: "CSM Junior" },
+  { level: 2, xp: 500, title: "CSM Confirmé" },
+  { level: 3, xp: 1200, title: "CSM Senior" },
+  { level: 4, xp: 2500, title: "Head of CS" },
 ];
 
 /**
@@ -45,6 +45,7 @@ export function getLevelProgress(totalXp) {
   const next = LEVEL_THRESHOLDS[levelIndex + 1] || null;
   return {
     level: current.level,
+    title: current.title,
     xpIntoLevel: totalXp - current.xp,
     xpNeededForNext: next ? next.xp - current.xp : null,
     next,

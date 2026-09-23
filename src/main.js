@@ -1,57 +1,99 @@
-import { mountQuiz } from "./quiz/quiz.js";
-import { level1Questions } from "./quiz/data/level1-questions.js";
 import { mountAuthScreen } from "./auth/authScreen.js";
 import { getSession, onAuthChange, signOut } from "./auth/auth.js";
 import { getProfile } from "./xp/xpRemote.js";
+import { getLevelProgress } from "./xp/constants.js";
+import { mountTabBar } from "./nav/tabBar.js";
+import { mountDashboard } from "./dashboard/dashboard.js";
+import { mountClientsView } from "./views/clientsView.js";
+import { mountTasksView } from "./views/tasksView.js";
+import { mountLearnView } from "./views/learnView.js";
 
 const app = document.getElementById("app");
 
+let currentXp = 0;
+let currentUserId = null;
+let activeTab = "home";
+
 async function boot() {
   const session = await getSession();
-  render(session);
-
-  // Réagit à toute connexion/déconnexion (y compris un refresh de token
-  // en arrière-plan) sans avoir à recharger la page.
+  await render(session);
   onAuthChange((session) => render(session));
 }
 
 async function render(session) {
   if (!session) {
     app.innerHTML = `
-      <header><h1>CSM Academy</h1></header>
+      <header><div class="header-top"><h1>CSM Academy</h1></div></header>
       <main><div id="auth-root"></div></main>
     `;
     mountAuthScreen(document.getElementById("auth-root"));
     return;
   }
 
-  const profile = await getProfile(session.user.id);
-  const currentXp = profile?.xp ?? 0;
+  currentUserId = session.user.id;
+  const profile = await getProfile(currentUserId);
+  currentXp = profile?.xp ?? 0;
 
   app.innerHTML = `
-    <header>
+    <header id="app-header"></header>
+    <main><div id="view-root"></div></main>
+    <div id="tab-bar-root"></div>
+  `;
+
+  renderHeader();
+  renderTabBar();
+  renderActiveView();
+}
+
+function renderHeader() {
+  const { title, xpIntoLevel, xpNeededForNext } = getLevelProgress(currentXp);
+  const pct = xpNeededForNext ? Math.min(100, Math.round((xpIntoLevel / xpNeededForNext) * 100)) : 100;
+
+  document.getElementById("app-header").innerHTML = `
+    <div class="header-top">
       <h1>CSM Academy</h1>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span class="xp-badge" id="xp-badge">${currentXp} XP</span>
-        <button id="signout-btn" style="background:none; border:none; color:rgba(255,255,255,0.6); font-size:12px; cursor:pointer;">Déconnexion</button>
-      </div>
-    </header>
-    <main>
-      <div id="quiz-root"></div>
-    </main>
+      <button id="signout-btn">Déconnexion</button>
+    </div>
+    <div class="xp-bar-row">
+      <span class="level-title">${title}</span>
+      <span>${currentXp} XP${xpNeededForNext ? ` · ${xpNeededForNext - xpIntoLevel} XP avant le niveau suivant` : " · niveau max"}</span>
+    </div>
+    <div class="xp-track"><div class="xp-fill" style="width:${pct}%;"></div></div>
   `;
 
   document.getElementById("signout-btn").addEventListener("click", () => signOut());
+}
 
-  const xpBadge = document.getElementById("xp-badge");
-  mountQuiz(document.getElementById("quiz-root"), {
-    levelId: "level1",
-    userId: session.user.id,
-    questions: level1Questions,
-    onXpChange: (totalXp) => {
-      xpBadge.textContent = `${totalXp} XP`;
+function renderTabBar() {
+  mountTabBar(document.getElementById("tab-bar-root"), {
+    activeTab,
+    onTabChange: (tab) => {
+      activeTab = tab;
+      renderTabBar(); // remet à jour l'état visuel actif
+      renderActiveView();
     },
   });
+}
+
+function renderActiveView() {
+  const viewRoot = document.getElementById("view-root");
+  const { level } = getLevelProgress(currentXp);
+
+  if (activeTab === "home") {
+    mountDashboard(viewRoot, {});
+  } else if (activeTab === "clients") {
+    mountClientsView(viewRoot);
+  } else if (activeTab === "tasks") {
+    mountTasksView(viewRoot, { level });
+  } else if (activeTab === "learn") {
+    mountLearnView(viewRoot, {
+      userId: currentUserId,
+      onXpChange: (totalXp) => {
+        currentXp = totalXp;
+        renderHeader(); // la barre XP en haut se met à jour immédiatement
+      },
+    });
+  }
 }
 
 boot();
