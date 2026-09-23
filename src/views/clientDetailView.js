@@ -1,4 +1,5 @@
 import { getClient, listNotes, addNote } from "../clients/clientsApi.js";
+import { logClientView } from "../missions/missionsApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
 import { XP_VALUES } from "../xp/constants.js";
 import {
@@ -32,6 +33,10 @@ export async function mountClientDetailView(container, { clientId, userId, onBac
     container.innerHTML = `<div class="card"><div class="placeholder-note">Erreur de chargement : ${escapeHtml(err.message)}</div></div>`;
     return;
   }
+
+  // Enregistre la consultation de cette fiche (sert à la Mission 1).
+  // Non-bloquant : un échec ici ne doit jamais empêcher de voir la fiche.
+  logClientView(userId, clientId).catch(() => {});
 
   render();
 

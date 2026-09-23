@@ -6,7 +6,7 @@ export const XP_VALUES = {
   quizEasy: 10,
   quizMedium: 20,
   quizHard: 40,
-  mission: 100,
+  missionConnaisPortefeuille: 150,
   simulation: 150,
   expertChallenge: 300,
   clientNote: 20,

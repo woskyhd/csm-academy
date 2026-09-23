@@ -1,13 +1,17 @@
-// Écran Home. Étape 2 : "3 priorités" et le bandeau clients critiques
-// utilisent maintenant les vraies données du portefeuille clients.
-// La mission du jour (étape 3) et l'activité récente multi-source restent
-// des placeholders honnêtes tant qu'il n'y a rien de réel à afficher.
+// Écran Home. Étape 3 : la carte "Mission du jour" affiche maintenant la
+// vraie progression de la Mission 1. "3 priorités" et le bandeau critique
+// (étape 2) restent basés sur les vraies données clients. L'activité
+// récente multi-source reste un placeholder honnête tant qu'il n'y a rien
+// de réel à afficher.
 
 import { listClients } from "../clients/clientsApi.js";
 import { getTopPriorities, getCriticalClients } from "../clients/priorities.js";
 import { healthScoreColor, statusBadgeColor, statusLabel } from "../clients/healthScore.js";
+import { MISSIONS } from "../missions/constants.js";
+import { getViewedClientIds, getUserNotesCount, getMissionProgress } from "../missions/missionsApi.js";
+import { evaluateMission1 } from "../missions/progress.js";
 
-export async function mountDashboard(container, { profileName, onOpenClient }) {
+export async function mountDashboard(container, { profileName, userId, onOpenClient, onOpenMission }) {
   container.innerHTML = `
     <div class="card">
       <div class="card-title">Bonjour${profileName ? " " + escapeHtml(profileName) : ""}</div>
@@ -25,6 +29,21 @@ export async function mountDashboard(container, { profileName, onOpenClient }) {
 
   const critical = loadError ? [] : getCriticalClients(clients);
   const priorities = loadError ? [] : getTopPriorities(clients, 3);
+
+  const mission1 = MISSIONS.find((m) => m.id === "mission_1_connais_portefeuille");
+  let mission1Eval = null;
+  if (!loadError && userId) {
+    try {
+      const [viewedIds, notesCount, progress] = await Promise.all([
+        getViewedClientIds(userId),
+        getUserNotesCount(userId),
+        getMissionProgress(userId, mission1.id),
+      ]);
+      mission1Eval = evaluateMission1(clients, viewedIds, notesCount, progress);
+    } catch {
+      mission1Eval = null; // affichage dégradé ci-dessous, pas d'erreur bloquante
+    }
+  }
 
   container.innerHTML = `
     <div class="card">
@@ -58,9 +77,25 @@ export async function mountDashboard(container, { profileName, onOpenClient }) {
         : ""
     }
 
-    <div class="card">
+    <div class="card mission-card" ${mission1Eval ? 'style="cursor:pointer;"' : ""}>
       <div class="card-title">Mission du jour</div>
-      <div class="placeholder-note">Pas encore de mission disponible — arrive à l'étape 3.</div>
+      ${
+        mission1Eval
+          ? `
+            <div style="font-weight:500; margin-bottom:4px;">${escapeHtml(mission1.title)}</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+              ${
+                mission1Eval.completed
+                  ? `Terminée — +${mission1.xpReward} XP`
+                  : `${[mission1Eval.req1Done, mission1Eval.req2Done, mission1Eval.req3Done].filter(Boolean).length}/3 objectifs complétés`
+              }
+            </div>
+            <div class="xp-track" style="height:6px;"><div class="xp-fill" style="width:${
+              (([mission1Eval.req1Done, mission1Eval.req2Done, mission1Eval.req3Done].filter(Boolean).length / 3) * 100).toFixed(0)
+            }%;"></div></div>
+          `
+          : `<div class="placeholder-note">${loadError ? "Portefeuille indisponible." : "Chargement de la mission..."}</div>`
+      }
     </div>
 
     <div class="card">
@@ -94,6 +129,10 @@ export async function mountDashboard(container, { profileName, onOpenClient }) {
     container.querySelectorAll(".priority-item").forEach((el) => {
       el.addEventListener("click", () => onOpenClient(el.dataset.clientId));
     });
+  }
+
+  if (onOpenMission && mission1Eval) {
+    container.querySelector(".mission-card").addEventListener("click", () => onOpenMission(mission1.id));
   }
 }
 

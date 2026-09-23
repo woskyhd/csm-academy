@@ -6,6 +6,7 @@ import { mountTabBar } from "./nav/tabBar.js";
 import { mountDashboard } from "./dashboard/dashboard.js";
 import { mountClientsView } from "./views/clientsView.js";
 import { mountClientDetailView } from "./views/clientDetailView.js";
+import { mountMissionView } from "./views/missionView.js";
 import { mountTasksView } from "./views/tasksView.js";
 import { mountLearnView } from "./views/learnView.js";
 
@@ -15,6 +16,7 @@ let currentXp = 0;
 let currentUserId = null;
 let activeTab = "home";
 let selectedClientId = null;
+let activeMissionId = null;
 
 async function boot() {
   const session = await getSession();
@@ -72,6 +74,7 @@ function renderTabBar() {
     onTabChange: (tab) => {
       activeTab = tab;
       if (tab !== "clients") selectedClientId = null; // repart sur la liste si on revient plus tard
+      if (tab !== "home") activeMissionId = null; // repart sur le dashboard si on revient plus tard
       renderTabBar(); // remet à jour l'état visuel actif
       renderActiveView();
     },
@@ -83,14 +86,34 @@ function renderActiveView() {
   const { level } = getLevelProgress(currentXp);
 
   if (activeTab === "home") {
-    mountDashboard(viewRoot, {
-      onOpenClient: (id) => {
-        selectedClientId = id;
-        activeTab = "clients";
-        renderTabBar();
-        renderActiveView();
-      },
-    });
+    if (activeMissionId) {
+      mountMissionView(viewRoot, {
+        missionId: activeMissionId,
+        userId: currentUserId,
+        onBack: () => {
+          activeMissionId = null;
+          renderActiveView();
+        },
+        onXpChange: (totalXp) => {
+          currentXp = totalXp;
+          renderHeader();
+        },
+      });
+    } else {
+      mountDashboard(viewRoot, {
+        userId: currentUserId,
+        onOpenClient: (id) => {
+          selectedClientId = id;
+          activeTab = "clients";
+          renderTabBar();
+          renderActiveView();
+        },
+        onOpenMission: (id) => {
+          activeMissionId = id;
+          renderActiveView();
+        },
+      });
+    }
   } else if (activeTab === "clients") {
     if (selectedClientId) {
       mountClientDetailView(viewRoot, {
