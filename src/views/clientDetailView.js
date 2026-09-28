@@ -21,7 +21,15 @@ const HEALTH_LABELS = {
   goals: "Goal Achievement",
 };
 
-const NOTE_TYPE_LABELS = { call: "Appel", email: "Email", qbr: "QBR", support: "Support", note: "Note" };
+const NOTE_TYPE_LABELS = {
+  call: "Appel",
+  email: "Email",
+  qbr: "QBR",
+  support: "Support",
+  note: "Note",
+  status_update: "Mise à jour statut",
+  proposal: "Proposition",
+};
 
 export async function mountClientDetailView(container, { clientId, userId, onBack, onXpChange }) {
   container.innerHTML = `<div class="card"><div class="placeholder-note">Chargement...</div></div>`;
@@ -108,6 +116,8 @@ export async function mountClientDetailView(container, { clientId, userId, onBac
           <option value="email">Email</option>
           <option value="qbr">QBR</option>
           <option value="support">Support</option>
+          <option value="status_update">Mise à jour statut</option>
+          <option value="proposal">Proposition</option>
         </select>
         <textarea id="note-content" class="answer-btn" style="min-height:70px; cursor:text; resize:vertical;" placeholder="Résumé de l'échange ou observation..."></textarea>
         <button class="btn btn-primary" id="add-note-btn">Enregistrer la note</button>

@@ -93,6 +93,7 @@ function renderActiveView() {
       mountMissionView(viewRoot, {
         missionId: activeMissionId,
         userId: currentUserId,
+        level,
         onBack: () => {
           activeMissionId = null;
           renderActiveView();
@@ -105,6 +106,7 @@ function renderActiveView() {
     } else {
       mountDashboard(viewRoot, {
         userId: currentUserId,
+        level,
         onOpenClient: (id) => {
           selectedClientId = id;
           activeTab = "clients";

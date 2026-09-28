@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabaseClient.js";
+import { MISSIONS } from "./constants.js";
 
 // Enregistre qu'un client a été consulté. Idempotent : primary key
 // (user_id, client_id) côté base, donc revoir 10 fois la même fiche ne
@@ -36,6 +37,14 @@ export async function getMissionProgress(userId, missionId) {
   return data; // null si la mission n'a jamais été commencée
 }
 
+// Progression sur les 3 missions à la fois — sert au dashboard pour
+// déterminer quelle est la "mission du jour" sans dupliquer la logique
+// d'évaluation détaillée de chaque mission.
+export async function getMissionsOverview(userId) {
+  const progresses = await Promise.all(MISSIONS.map((m) => getMissionProgress(userId, m.id)));
+  return MISSIONS.map((mission, i) => ({ mission, progress: progresses[i] }));
+}
+
 // N'écrase QUE risk_client_id : si la mission est déjà 'completed' par
 // ailleurs, cet appel ne touche pas au statut ni à completed_at.
 export async function submitRiskAnswer({ userId, missionId, clientId }) {
@@ -43,6 +52,19 @@ export async function submitRiskAnswer({ userId, missionId, clientId }) {
     .from("mission_progress")
     .upsert(
       { user_id: userId, mission_id: missionId, risk_client_id: clientId, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,mission_id" }
+    );
+  if (error) throw error;
+}
+
+// N'écrase QUE quiz_passed — même logique de mise à jour partielle. Utilisé
+// par les missions dont un objectif est une question à choix multiples
+// (ex : Mission 3, identifier l'opportunité d'upsell).
+export async function markQuizPassed(userId, missionId) {
+  const { error } = await supabase
+    .from("mission_progress")
+    .upsert(
+      { user_id: userId, mission_id: missionId, quiz_passed: true, updated_at: new Date().toISOString() },
       { onConflict: "user_id,mission_id" }
     );
   if (error) throw error;
