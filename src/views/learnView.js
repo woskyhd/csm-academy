@@ -1,14 +1,15 @@
 import { mountQuiz } from "../quiz/quiz.js";
 import { level1Questions } from "../quiz/data/level1-questions.js";
-import { LESSONS, LOCKED_FUTURE_LESSONS } from "../lessons/constants.js";
+import { LESSONS } from "../lessons/constants.js";
 import { getAllLessonProgress } from "../lessons/lessonsApi.js";
 import { isLessonUnlocked } from "../lessons/unlock.js";
 import { getMissionProgress } from "../missions/missionsApi.js";
+import { getMission } from "../missions/constants.js";
 
 // Hub des leçons : liste des leçons (débloquées/verrouillées selon les
-// missions terminées), plus le quiz Niveau 1 déjà fonctionnel en dessous
-// (indépendant du système de leçons).
-export async function mountLearnView(container, { userId, onXpChange, onOpenLesson }) {
+// missions terminées ou le niveau atteint), plus le quiz Niveau 1 déjà
+// fonctionnel en dessous (indépendant du système de leçons).
+export async function mountLearnView(container, { userId, level, onXpChange, onOpenLesson }) {
   container.innerHTML = `<div class="card"><div class="placeholder-note">Chargement...</div></div>`;
 
   const missionIdsNeeded = [...new Set(LESSONS.filter((l) => l.unlock.type === "mission").map((l) => l.unlock.missionId))];
@@ -38,27 +39,19 @@ export async function mountLearnView(container, { userId, onXpChange, onOpenLess
           : ""
       }
       ${LESSONS.map((lesson) => {
-        const unlocked = !loadError && isLessonUnlocked(lesson, missionProgressById);
+        const unlocked = !loadError && isLessonUnlocked(lesson, missionProgressById, level);
         const completed = progressByLessonId[lesson.id]?.status === "completed";
         return `
           <div class="lesson-item ${unlocked ? "" : "locked"}" data-lesson-id="${lesson.id}" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); ${unlocked ? "cursor:pointer;" : "opacity:0.5;"}">
             <div>
               <div style="font-weight:500;">${completed ? "✅ " : unlocked ? "" : "🔒 "}${escapeHtml(lesson.title)}</div>
               <div style="font-size:12px; color:var(--text-muted);">${
-                unlocked ? `${lesson.xpReward} XP` : "Se débloque en terminant la mission « Connais ton portefeuille »"
+                unlocked ? `${lesson.xpReward} XP` : getLockReason(lesson)
               }</div>
             </div>
           </div>
         `;
       }).join("")}
-      ${LOCKED_FUTURE_LESSONS.map(
-        (title) => `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); opacity:0.4;">
-            <div style="font-weight:500;">🔒 ${escapeHtml(title)}</div>
-            <div style="font-size:12px; color:var(--text-muted);">Bientôt</div>
-          </div>
-        `
-      ).join("")}
     </div>
 
     <div class="card">
@@ -80,6 +73,17 @@ export async function mountLearnView(container, { userId, onXpChange, onOpenLess
     questions: level1Questions,
     onXpChange,
   });
+}
+
+function getLockReason(lesson) {
+  if (lesson.unlock.type === "mission") {
+    const mission = getMission(lesson.unlock.missionId);
+    return `Se débloque en terminant la mission « ${mission ? mission.title : "..."} »`;
+  }
+  if (lesson.unlock.type === "level") {
+    return `Se débloque au niveau ${lesson.unlock.level}`;
+  }
+  return "Verrouillé";
 }
 
 function escapeHtml(str) {

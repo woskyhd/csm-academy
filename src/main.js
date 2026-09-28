@@ -184,6 +184,7 @@ function renderActiveView() {
     } else {
       mountLearnView(viewRoot, {
         userId: currentUserId,
+        level,
         onXpChange: (totalXp) => {
           currentXp = totalXp;
           renderHeader(); // la barre XP en haut se met à jour immédiatement

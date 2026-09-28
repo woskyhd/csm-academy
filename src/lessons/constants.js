@@ -3,9 +3,14 @@
 // des 5 clients fictifs du portefeuille, erreur fréquente à éviter, et
 // un mini-quiz avec feedback. Récompense : 50 à 75 XP selon la leçon.
 //
-// Déblocage : 1 leçon dès le départ, 2 de plus débloquées en terminant
-// la Mission 1 (comme précisé dans le prompt d'origine : "150 XP +
-// déverrouillage de 2 leçons").
+// Déblocage, 3 types (voir lessons/unlock.js) :
+// - "start" : dispo dès le départ (1 leçon)
+// - "mission" : débloquée en terminant une mission donnée — la Mission 1
+//   débloque 2 leçons ("150 XP + déverrouillage de 2 leçons" dans le
+//   prompt d'origine), et les Missions 2/3 débloquent chacune la leçon
+//   qui prolonge leur thème (escalade / expansion)
+// - "level" : débloquée à partir d'un niveau donné ("L'art du QBR" à
+//   partir du Niveau 2, une pratique plus avancée que les fondamentaux)
 
 export const LESSONS = [
   {
@@ -121,10 +126,112 @@ export const LESSONS = [
       },
     ],
   },
+  {
+    id: "lesson_art_du_qbr",
+    title: "L'art du QBR",
+    xpReward: 60,
+    unlock: { type: "level", level: 2 },
+    concept:
+      "Un QBR (Quarterly Business Review) est un point stratégique périodique avec le client, pas un simple appel de suivi. L'objectif : revenir sur la valeur générée depuis le dernier point, aligner les objectifs à venir, et repérer ensemble les risques ou opportunités. Un bon QBR se prépare à l'avance avec des données concrètes, pas improvisé au moment de l'appel.",
+    example:
+      "Le QBR de Nexflow (visible dans sa timeline) a porté sur la satisfaction élevée et une discussion sur l'expansion vers l'équipe Marketing — exactement la structure d'un bon QBR : bilan positif chiffré, puis ouverture vers la suite. Le QBR de Frontlabs suit le même schéma : constater la croissance de l'équipe et la forte satisfaction, avant d'aborder un besoin de plan supérieur.",
+    commonMistake:
+      "L'erreur fréquente : transformer le QBR en simple compte-rendu technique ou en démonstration produit, sans jamais mettre de chiffres sur la valeur générée ni ouvrir sur les objectifs futurs du client. Un QBR qui ne parle que de fonctionnalités passe à côté de son but : montrer le retour sur investissement et construire la suite de la relation.",
+    quiz: [
+      {
+        question: "Quel est l'objectif principal d'un QBR ?",
+        options: [
+          "Présenter les nouvelles fonctionnalités du produit",
+          "Faire le bilan de la valeur générée et aligner les objectifs futurs avec le client",
+          "Renouveler automatiquement le contrat",
+        ],
+        correctIndex: 1,
+        explanation:
+          "Un QBR sert à montrer la valeur générée et à construire la suite de la relation — pas à faire une démo produit.",
+      },
+      {
+        question: "Pourquoi un QBR doit-il être préparé à l'avance avec des données concrètes ?",
+        options: [
+          "Parce que c'est une obligation contractuelle",
+          "Parce qu'un bilan chiffré rend la valeur générée visible et crédible pour le client",
+          "Parce que le client s'attend à un rapport PDF",
+        ],
+        correctIndex: 1,
+        explanation: "Sans chiffres concrets, la valeur générée reste une impression plutôt qu'une preuve.",
+      },
+    ],
+  },
+  {
+    id: "lesson_detecter_expansion",
+    title: "Détecter l'expansion",
+    xpReward: 65,
+    unlock: { type: "mission", missionId: "mission_3_expanse_frontlabs" },
+    concept:
+      "Détecter une opportunité d'expansion (upsell/cross-sell), c'est repérer, avant même que le client ne le demande, les signaux indiquant qu'il pourrait tirer profit d'un plan supérieur ou de sièges additionnels : forte adoption, croissance de l'équipe utilisatrice, NPS élevé, ou demandes répétées au-delà du plan actuel.",
+    example:
+      "Frontlabs coche plusieurs signaux à la fois : adoption à 94%, NPS à 10, et un signal d'expansion déjà détecté — sans compter la discussion notée dans sa timeline sur un besoin de plan supérieur pour plus d'utilisateurs. Nexflow présente un profil similaire : champion actif, adoption à 87%, et une discussion de QBR sur l'expansion vers l'équipe Marketing. Dans les deux cas, le signal était visible avant qu'un commercial n'ait eu besoin de le chercher.",
+    commonMistake:
+      "L'erreur classique : ne penser à l'expansion qu'au moment du renouvellement, ou la laisser entièrement à l'équipe commerciale, alors que le CSM est souvent le mieux placé pour la repérer tôt — c'est lui qui voit l'usage réel, l'engagement de l'équipe, et les demandes informelles du client au quotidien.",
+    quiz: [
+      {
+        question: "Lequel de ces signaux indique le plus clairement une opportunité d'expansion ?",
+        options: [
+          "Un ticket support resté sans réponse depuis 2 semaines",
+          "Une adoption très forte combinée à une demande informelle de plus de sièges",
+          "Un NPS de 2/10",
+        ],
+        correctIndex: 1,
+        explanation:
+          "Forte adoption + demande de sièges supplémentaires sont deux signaux directs d'une opportunité d'expansion.",
+      },
+      {
+        question: "Pourquoi le CSM est-il souvent bien placé pour détecter une opportunité d'expansion ?",
+        options: [
+          "Parce qu'il a accès aux grilles tarifaires commerciales",
+          "Parce qu'il observe directement l'usage réel et l'engagement de l'équipe cliente au quotidien",
+          "Parce que c'est sa seule responsabilité",
+        ],
+        correctIndex: 1,
+        explanation:
+          "Le CSM voit l'usage et l'engagement en continu — une position d'observation que l'équipe commerciale n'a pas.",
+      },
+    ],
+  },
+  {
+    id: "lesson_gerer_escalade",
+    title: "Gérer une escalade",
+    xpReward: 70,
+    unlock: { type: "mission", missionId: "mission_2_sauve_medicore" },
+    concept:
+      "Une escalade, c'est un problème client devenu urgent : insatisfaction ouverte, sponsor injoignable, ou menace explicite de départ. Bien la gérer suppose de réagir vite, de reconnaître le problème sans se justifier immédiatement, et de proposer un plan d'action concret — pas seulement des excuses.",
+    example:
+      "Medicore est un cas d'escalade typique : NPS à 2/10, CEO injoignable depuis 2 mois, le client évalue déjà des alternatives, et le renouvellement arrive dans 18 jours. À ce stade, un simple email de plus ne suffit pas — c'est exactement le genre de situation qui justifie un appel de rescue direct et un plan d'action écrit, comme le prévoit la mission « Sauve Medicore ».",
+    commonMistake:
+      "L'erreur fréquente : multiplier les emails de relance sans varier d'approche, en espérant que le client finira par répondre. Face à un silence prolongé (comme les tentatives infructueuses sur Medicore), il faut changer de canal ou de niveau d'interlocuteur plutôt que de répéter une action qui ne fonctionne déjà pas.",
+    quiz: [
+      {
+        question: "Face à un client en situation d'escalade qui ne répond plus aux emails, quelle est la meilleure approche ?",
+        options: [
+          "Envoyer un nouvel email de relance identique",
+          "Changer de canal ou de niveau d'interlocuteur pour débloquer la situation",
+          "Attendre la date de renouvellement pour en reparler",
+        ],
+        correctIndex: 1,
+        explanation: "Répéter la même action qui échoue déjà ne débloque rien — il faut changer d'approche.",
+      },
+      {
+        question: "Qu'est-ce qui caractérise le mieux une situation d'escalade ?",
+        options: [
+          "Un client satisfait qui demande une nouvelle fonctionnalité",
+          "Un problème devenu urgent : insatisfaction ouverte ou menace de départ",
+          "Une simple question technique sur le produit",
+        ],
+        correctIndex: 1,
+        explanation: "L'escalade se définit par l'urgence et le risque de rupture, pas par une demande ordinaire.",
+      },
+    ],
+  },
 ];
-
-// Leçons futures, pas encore construites — juste affichées comme à venir.
-export const LOCKED_FUTURE_LESSONS = ["L'art du QBR", "Détecter l'expansion", "Gérer une escalade"];
 
 export function getLesson(lessonId) {
   return LESSONS.find((l) => l.id === lessonId) || null;
