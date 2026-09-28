@@ -2,6 +2,7 @@ import { getClient, listNotes, addNote } from "../clients/clientsApi.js";
 import { logClientView } from "../missions/missionsApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
 import { XP_VALUES } from "../xp/constants.js";
+import { showXpToast } from "../ui/toast.js";
 import {
   calculateHealthScore,
   healthScoreColor,
@@ -177,7 +178,10 @@ export async function mountClientDetailView(container, { clientId, userId, onBac
         reason: `Note ajoutée — ${client.name}`,
         source: "client_note",
       });
-      if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+      if (xpResult.totalXp !== null) {
+        onXpChange?.(xpResult.totalXp);
+        showXpToast(XP_VALUES.clientNote);
+      }
 
       notes = await listNotes(clientId);
       render();

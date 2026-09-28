@@ -10,6 +10,7 @@ import { mountMissionView } from "./views/missionView.js";
 import { mountTasksView } from "./views/tasksView.js";
 import { mountLearnView } from "./views/learnView.js";
 import { mountLessonView } from "./views/lessonView.js";
+import { registerServiceWorker } from "./pwa.js";
 
 const app = document.getElementById("app");
 
@@ -181,3 +182,4 @@ function renderActiveView() {
 }
 
 boot();
+registerServiceWorker();

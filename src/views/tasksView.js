@@ -3,6 +3,7 @@ import { listTasks, createTask, completeTask } from "../tasks/tasksApi.js";
 import { TASK_TYPE_LABELS, PRIORITY_LABELS, PRIORITY_COLORS, PRIORITY_ORDER } from "../tasks/constants.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
 import { XP_VALUES } from "../xp/constants.js";
+import { showXpToast } from "../ui/toast.js";
 
 export async function mountTasksView(container, { level, userId, onXpChange }) {
   if (level < 2) {
@@ -168,7 +169,10 @@ export async function mountTasksView(container, { level, userId, onXpChange }) {
         source: "task",
       });
       if (xpResult.error) throw new Error(xpResult.error);
-      if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+      if (xpResult.totalXp !== null) {
+        onXpChange?.(xpResult.totalXp);
+        showXpToast(XP_VALUES.taskComplete);
+      }
 
       tasks = await listTasks(userId);
       render();

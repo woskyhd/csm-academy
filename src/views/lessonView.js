@@ -1,6 +1,7 @@
 import { getLesson } from "../lessons/constants.js";
 import { getLessonProgress, markLessonCompleted } from "../lessons/lessonsApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
+import { showXpToast } from "../ui/toast.js";
 
 // Une leçon = concept + exemple concret + erreur fréquente, puis un
 // mini-quiz qu'il faut réussir (avec retries illimités) pour valider la
@@ -143,7 +144,10 @@ export async function mountLessonView(container, { lessonId, userId, onBack, onX
       });
       if (xpResult.error) throw new Error(xpResult.error);
       await markLessonCompleted(userId, lessonId);
-      if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+      if (xpResult.totalXp !== null) {
+        onXpChange?.(xpResult.totalXp);
+        showXpToast(lesson.xpReward);
+      }
       root.innerHTML += `<div class="badge green" style="margin-top:10px;">+${lesson.xpReward} XP</div>`;
     } catch (err) {
       root.innerHTML += `<div class="placeholder-note" style="color:var(--red); margin-top:10px;">XP non enregistrée (problème réseau) — recharge la page pour réessayer.</div>`;

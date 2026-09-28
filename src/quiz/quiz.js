@@ -1,5 +1,6 @@
 import { XP_VALUES } from "../xp/constants.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
+import { showXpToast } from "../ui/toast.js";
 
 const XP_BY_DIFFICULTY = {
   easy: XP_VALUES.quizEasy,
@@ -107,6 +108,7 @@ export function mountQuiz(container, { levelId, userId, questions, onXpChange })
         console.error("Erreur d'enregistrement XP :", result.error);
       } else if (result.totalXp !== null) {
         onXpChange?.(result.totalXp);
+        showXpToast(amount);
       }
     }
 

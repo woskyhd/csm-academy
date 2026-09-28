@@ -1,6 +1,7 @@
 import { getMissionProgress, markMissionCompleted, markQuizPassed } from "./missionsApi.js";
 import { listNotes, addNote } from "../clients/clientsApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
+import { showXpToast } from "../ui/toast.js";
 
 const CLIENT_ID = "frontlabs";
 
@@ -56,7 +57,10 @@ export async function mountMission3(container, { mission, userId, level, onBack,
         await markMissionCompleted(userId, mission.id);
         progress = { ...(progress || {}), status: "completed" };
         completed = true;
-        if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+        if (xpResult.totalXp !== null) {
+          onXpChange?.(xpResult.totalXp);
+          showXpToast(mission.xpReward);
+        }
       } catch (err) {
         // XP non enregistrée : on retentera au prochain affichage.
       }

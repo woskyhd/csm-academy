@@ -2,6 +2,7 @@ import { getViewedClientIds, getUserNotesCount, getMissionProgress, submitRiskAn
 import { evaluateMission1 } from "./progress.js";
 import { listClients } from "../clients/clientsApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
+import { showXpToast } from "../ui/toast.js";
 
 export async function mountMission1(container, { mission, userId, onBack, onXpChange }) {
   const missionId = mission.id;
@@ -42,7 +43,10 @@ export async function mountMission1(container, { mission, userId, onBack, onXpCh
         await markMissionCompleted(userId, missionId);
         progress = { ...(progress || {}), status: "completed" };
         evalResult.completed = true;
-        if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+        if (xpResult.totalXp !== null) {
+          onXpChange?.(xpResult.totalXp);
+          showXpToast(mission.xpReward);
+        }
       } catch (err) {
         // Si l'octroi échoue (réseau, etc.), on ne marque rien : au
         // prochain affichage de cet écran, on retentera automatiquement.

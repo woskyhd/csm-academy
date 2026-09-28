@@ -2,6 +2,7 @@ import { getMissionProgress, markMissionCompleted } from "./missionsApi.js";
 import { listNotes } from "../clients/clientsApi.js";
 import { listTasks } from "../tasks/tasksApi.js";
 import { grantXPRemote } from "../xp/xpRemote.js";
+import { showXpToast } from "../ui/toast.js";
 
 const CLIENT_ID = "medicore";
 
@@ -45,7 +46,10 @@ export async function mountMission2(container, { mission, userId, level, onBack,
         await markMissionCompleted(userId, mission.id);
         progress = { ...(progress || {}), status: "completed" };
         completed = true;
-        if (xpResult.totalXp !== null) onXpChange?.(xpResult.totalXp);
+        if (xpResult.totalXp !== null) {
+          onXpChange?.(xpResult.totalXp);
+          showXpToast(mission.xpReward);
+        }
       } catch (err) {
         // XP non enregistrée : on retentera au prochain affichage.
       }
