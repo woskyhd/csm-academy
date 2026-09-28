@@ -53,3 +53,18 @@ export async function getProfile(userId) {
   if (error) return null;
   return data;
 }
+
+// Sert la carte "Activité récente" du dashboard : xp_transactions est
+// déjà un vrai journal append-only (aucune ligne modifiée ni supprimée),
+// donc c'est directement la source de vérité pour l'historique — pas
+// besoin d'une table séparée.
+export async function listRecentXpTransactions(userId, limit = 5) {
+  const { data, error } = await supabase
+    .from("xp_transactions")
+    .select("id, amount, reason, source, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}

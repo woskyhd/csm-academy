@@ -1,14 +1,15 @@
 // Écran Home. La carte "Mission du jour" affiche la première mission des 3
 // pas encore terminée (verrouillée si le niveau n'est pas encore atteint).
 // "3 priorités" et le bandeau critique restent basés sur les vraies
-// données clients. L'activité récente multi-source reste un placeholder
-// honnête tant qu'il n'y a rien de réel à afficher.
+// données clients. "Activité récente" lit directement xp_transactions,
+// qui est déjà un vrai journal append-only de tout ce qui rapporte de l'XP.
 
 import { listClients } from "../clients/clientsApi.js";
 import { getTopPriorities, getCriticalClients } from "../clients/priorities.js";
 import { healthScoreColor, statusBadgeColor, statusLabel } from "../clients/healthScore.js";
 import { getViewedClientIds, getUserNotesCount, getMissionsOverview } from "../missions/missionsApi.js";
 import { evaluateMission1 } from "../missions/progress.js";
+import { listRecentXpTransactions } from "../xp/xpRemote.js";
 
 export async function mountDashboard(container, { profileName, userId, level, onOpenClient, onOpenMission }) {
   container.innerHTML = `
@@ -52,6 +53,15 @@ export async function mountDashboard(container, { profileName, userId, level, on
       }
     } catch {
       nextMission = null; // affichage dégradé ci-dessous, pas d'erreur bloquante
+    }
+  }
+
+  let recentActivity = [];
+  if (userId) {
+    try {
+      recentActivity = await listRecentXpTransactions(userId, 5);
+    } catch {
+      recentActivity = []; // affichage dégradé ci-dessous, pas d'erreur bloquante
     }
   }
 
@@ -137,7 +147,23 @@ export async function mountDashboard(container, { profileName, userId, level, on
 
     <div class="card">
       <div class="card-title">Activité récente</div>
-      <div class="placeholder-note">Rien pour l'instant.</div>
+      ${
+        recentActivity.length
+          ? recentActivity
+              .map(
+                (tx) => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div>
+                  <div style="font-size:13px;">${escapeHtml(tx.reason || tx.source || "Activité")}</div>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${formatRelativeDate(tx.created_at)}</div>
+                </div>
+                <span style="font-size:13px; font-weight:600; color:var(--green);">+${tx.amount} XP</span>
+              </div>
+            `
+              )
+              .join("")
+          : `<div class="placeholder-note">Rien pour l'instant — les quiz, notes, tâches et missions apparaîtront ici.</div>`
+      }
     </div>
   `;
 
@@ -151,6 +177,18 @@ export async function mountDashboard(container, { profileName, userId, level, on
     container.querySelector(".mission-card").style.cursor = "pointer";
     container.querySelector(".mission-card").addEventListener("click", () => onOpenMission(nextMission.mission.id));
   }
+}
+
+function formatRelativeDate(isoString) {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `il y a ${days} j`;
+  return new Date(isoString).toLocaleDateString("fr-FR");
 }
 
 function escapeHtml(str) {
