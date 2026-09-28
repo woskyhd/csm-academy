@@ -47,11 +47,16 @@ export async function grantXPRemote({ userId, eventId, amount, reason, source })
 export async function getProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("xp, level, name, email")
+    .select("xp, level, name, email, onboarding_completed")
     .eq("id", userId)
     .single();
   if (error) return null;
   return data;
+}
+
+export async function markOnboardingCompleted(userId) {
+  const { error } = await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", userId);
+  if (error) throw error;
 }
 
 // Sert la carte "Activité récente" du dashboard : xp_transactions est

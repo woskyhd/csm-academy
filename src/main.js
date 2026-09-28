@@ -10,6 +10,7 @@ import { mountMissionView } from "./views/missionView.js";
 import { mountTasksView } from "./views/tasksView.js";
 import { mountLearnView } from "./views/learnView.js";
 import { mountLessonView } from "./views/lessonView.js";
+import { mountOnboardingView } from "./views/onboardingView.js";
 import { registerServiceWorker } from "./pwa.js";
 
 const app = document.getElementById("app");
@@ -41,6 +42,21 @@ async function render(session) {
   const profile = await getProfile(currentUserId);
   currentXp = profile?.xp ?? 0;
 
+  // onboarding_completed vit en base (pas en localStorage) : l'écran
+  // d'accueil ne réapparaît pas sur un autre appareil une fois vu.
+  if (!profile?.onboarding_completed) {
+    app.innerHTML = `<div id="onboarding-root"></div>`;
+    mountOnboardingView(document.getElementById("onboarding-root"), {
+      userId: currentUserId,
+      onComplete: () => renderMainShell(),
+    });
+    return;
+  }
+
+  renderMainShell();
+}
+
+function renderMainShell() {
   app.innerHTML = `
     <header id="app-header"></header>
     <main><div id="view-root"></div></main>
